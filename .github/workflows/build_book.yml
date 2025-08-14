@@ -1,0 +1,39 @@
+name: Build PDF Cookbook
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Pandoc and LaTeX
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y pandoc texlive-xetex texlive-fonts-recommended
+
+      - name: Combine markdown files
+        run: |
+          echo "# Книга рецептов Gradle для Android-разработчика" > book.md
+          echo "" >> book.md
+          find docs -type f -name "*.md" | sort | xargs -I {} sh -c 'cat {}; echo -e "\n\n---\n\n";' >> book.md
+
+      - name: Create PDF
+        run: |
+          pandoc book.md \
+            --from markdown \
+            --output Gradle-Cookbook.pdf \
+            --toc \
+            --metadata title="Gradle Cookbook for Android Developer" \
+            --variable "mainfont:DejaVu Sans" # Шрифт с поддержкой кириллицы
+
+      - name: Upload PDF artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Gradle-Cookbook-PDF
+          path: Gradle-Cookbook.pdf
