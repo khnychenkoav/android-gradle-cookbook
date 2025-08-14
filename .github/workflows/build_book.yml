@@ -12,7 +12,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # ИЗМЕНЕНИЕ: Добавляем установку пакета со шрифтами
+      # Обновляем этот шаг
       - name: Install Pandoc, LaTeX, and Fonts
         run: |
           sudo apt-get update
@@ -22,7 +22,9 @@ jobs:
             texlive-fonts-recommended \
             texlive-lang-cyrillic \
             texlive-xetex \
-            fonts-dejavu # <--- ВОТ ОН, НУЖНЫЙ ПАКЕТ!
+            fonts-dejavu
+          # ИЗМЕНЕНИЕ: Принудительно обновляем кэш системных шрифтов
+          sudo fc-cache -f -v
 
       - name: Combine markdown files
         run: |
