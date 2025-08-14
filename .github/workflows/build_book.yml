@@ -12,18 +12,22 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install Pandoc and full LaTeX
+      # ИЗМЕНЕНИЕ: Добавляем установку пакета со шрифтами
+      - name: Install Pandoc, LaTeX, and Fonts
         run: |
           sudo apt-get update
-          # texlive-full очень большой, попробуем сначала более точечный набор
-          sudo apt-get install -y pandoc texlive-latex-base texlive-latex-recommended texlive-fonts-recommended texlive-lang-cyrillic texlive-xetex
+          sudo apt-get install -y \
+            pandoc \
+            texlive-latex-base \
+            texlive-fonts-recommended \
+            texlive-lang-cyrillic \
+            texlive-xetex \
+            fonts-dejavu # <--- ВОТ ОН, НУЖНЫЙ ПАКЕТ!
 
       - name: Combine markdown files
         run: |
-          # Заголовок книги
           echo '# Книга рецептов Gradle для Android-разработчика' > book.md
           echo '' >> book.md
-          # Собираем все файлы
           find docs -type f -name "*.md" | sort | xargs -I {} sh -c 'cat {}; echo -e "\n\n---\n\n";' >> book.md
 
       - name: Create PDF
@@ -38,7 +42,7 @@ jobs:
             --variable "monofont:DejaVu Mono" \
             --variable "geometry:margin=2cm" \
             --variable "documentclass:article" \
-            --variable "lang:ru" # Язык для правильных переносов
+            --variable "lang:ru"
 
       - name: Upload PDF artifact
         uses: actions/upload-artifact@v4
