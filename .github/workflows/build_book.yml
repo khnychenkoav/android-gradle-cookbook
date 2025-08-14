@@ -9,30 +9,49 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # 1. Скачиваем наш код, включая папку /fonts
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # 2. Устанавливаем Pandoc и LaTeX
+      - name: Install Pandoc and LaTeX
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y pandoc texlive-xetex
+
+      # 3. Устанавливаем НАШИ шрифты в систему
+      - name: Install custom fonts
+        run: |
+          # Создаем системную директорию для кастомных шрифтов
+          sudo mkdir -p /usr/local/share/fonts/truetype/
+          # Копируем наши шрифты из репозитория в системную директорию
+          sudo cp -r fonts/. /usr/local/share/fonts/truetype/
+          # Обновляем кэш шрифтов системы. Это КЛЮЧЕВОЙ шаг.
+          echo "Updating font cache..."
+          sudo fc-cache -f -v
+
+      # 4. Собираем все .md файлы в один
       - name: Combine markdown files
         run: |
           echo '# Книга рецептов Gradle для Android-разработчика' > book.md
           echo '' >> book.md
           find docs -type f -name "*.md" | sort | xargs -I {} sh -c 'cat {}; echo -e "\n\n---\n\n";' >> book.md
 
-      - name: Create PDF using Pandoc Docker image
-        uses: docker://pandoc/latex:latest
-        with:
-          args: >-
-            --from=markdown
-            --output=Gradle-Cookbook.pdf
-            --toc
-            --pdf-engine=xelatex
-            --variable=mainfont:"Liberation Serif"
-            --variable=sansfont:"Liberation Sans"
-            --variable=monofont:"Liberation Mono"
-            --variable=geometry:margin=2cm
+      # 5. Создаем PDF, используя НАШИ установленные шрифты
+      - name: Create PDF
+        run: |
+          pandoc book.md \
+            --from markdown \
+            --output Gradle-Cookbook.pdf \
+            --pdf-engine=xelatex \
+            --toc \
+            --variable=mainfont:"PT Serif" \
+            --variable=sansfont:"PT Sans" \
+            --variable=monofont:"PT Mono" \
+            --variable=geometry:margin=2cm \
             --variable=lang:ru
-            book.md
 
+      # 6. Загружаем результат
       - name: Upload PDF artifact
         uses: actions/upload-artifact@v4
         with:
